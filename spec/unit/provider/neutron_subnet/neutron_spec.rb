@@ -232,4 +232,19 @@ tenant_id="60f9544eb94c42a6b7e8e98c2be981b1"'
       provider.enable_dhcp=('False')
     end
   end
+
+  describe 'can parse one and more host_routes' do
+    one_host_routes = "[{u\'destination\': u\'12.0.0.0/24\', u\'nexthop\': u\'10.0.0.1\'}]"
+    two_host_routes = "[{u\'destination\': u\'12.0.0.0/24\', u\'nexthop\': u\'10.0.0.1\'}, {u\'destination\': u\'12.0.0.99/24\', u\'nexthop\': u\'10.0.0.99\'}]"
+
+    result_one_route = ["destination=12.0.0.0/24,nexthop=10.0.0.1"]
+    result_two_routes = ["destination=12.0.0.0/24,nexthop=10.0.0.1", "destination=12.0.0.99/24,nexthop=10.0.0.99"]
+
+    [ [one_host_routes, result_one_route], [two_host_routes, result_two_routes]].each { |i, o|
+      it "should call parse_host_routes with #{o.length} routes" do
+        results = provider_class.parse_host_routes(i)
+        expect(results).to eql(o)
+      end
+    }
+  end
 end

@@ -86,10 +86,9 @@ Puppet::Type.type(:neutron_subnet).provide(
   def self.parse_host_routes(values)
     host_routes = []
     return [] if values.empty? or values == '[]'
-    values = values.gsub('[', '').gsub(']', '')
-    for value in Array(values)
-      host_route = JSON.parse(value.gsub(/\\"/,'"').gsub('u\'', '"')
+    values = JSON.parse(values.gsub(/\\"/,'"').gsub('u\'', '"')
                               .gsub('\'','"'))
+    for host_route in values
       nexthop = host_route['nexthop']
       destination = host_route['destination']
       host_routes << "destination=#{destination},nexthop=#{nexthop}"

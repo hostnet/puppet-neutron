@@ -72,10 +72,9 @@ Puppet::Type.type(:neutron_subnet).provide(
   def self.parse_allocation_pool(values)
     allocation_pools = []
     return [] if values.empty? or values == '[]'
-    values = values.gsub('[', '').gsub(']', '')
-    for value in Array(values)
-      allocation_pool = JSON.parse(value.gsub(/\\"/,'"').gsub('u\'', '"')
-                                   .gsub('\'','"'))
+    values = JSON.parse(values.gsub(/\\"/,'"').gsub('u\'', '"')
+                        .gsub('\'','"'))
+    for allocation_pool in values
       start_ip = allocation_pool['start']
       end_ip = allocation_pool['end']
       allocation_pools << "start=#{start_ip},end=#{end_ip}"

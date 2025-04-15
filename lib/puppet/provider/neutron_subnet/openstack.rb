@@ -88,9 +88,9 @@ Puppet::Type.type(:neutron_subnet).provide(
     values = JSON.parse(values.gsub(/\\"/,'"').gsub('u\'', '"')
                               .gsub('\'','"'))
     for host_route in values
-      nexthop = host_route['nexthop']
+      gateway = host_route['gateway']
       destination = host_route['destination']
-      host_routes << "destination=#{destination},nexthop=#{nexthop}"
+      host_routes << "destination=#{destination},gateway=#{gateway}"
     end
     return host_routes
   end

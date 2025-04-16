@@ -84,7 +84,7 @@ name="net1"')
             :enable_dhcp      => 'False',
             :allocation_pools => 'start=10.0.0.2,end=10.0.0.10',
             :dns_nameservers  => '8.8.8.8',
-            :host_routes      => 'destination=10.0.1.0/24,nexthop=10.0.0.1',
+            :host_routes      => 'destination=10.0.1.0/24,gateway=10.0.0.1',
           }
         end
         it 'creates subnet' do
@@ -94,7 +94,7 @@ name="net1"')
                    '--gateway=10.0.0.1', '--no-dhcp',
                    '--allocation-pool=start=10.0.0.2,end=10.0.0.10',
                    '--dns-nameserver=8.8.8.8',
-                   '--host-route=destination=10.0.1.0/24,nexthop=10.0.0.1',
+                   '--host-route=destination=10.0.1.0/24,gateway=10.0.0.1',
                    '--network=net1',
                    '--subnet-range=10.0.0.0/24'])
             .returns('allocation_pools="[{\'start\': \'10.0.0.2\', \'end\': \'10.0.0.10\'}]"
@@ -118,7 +118,7 @@ name="net1"')
           provider.create
           expect(provider.exists?).to be_truthy
           expect(provider.allocation_pools).to eq(['start=10.0.0.2,end=10.0.0.10'])
-          expect(provider.host_routes).to eq(['destination=10.0.1.0/24,nexthop=10.0.0.1'])
+          expect(provider.host_routes).to eq(['destination=10.0.1.0/24,gateway=10.0.0.1'])
           expect(provider.network_name).to eq('net1')
         end
       end
@@ -134,7 +134,7 @@ name="net1"')
             :gateway_ip       => '2001:abcd::1',
             :allocation_pools => 'start=2001:abcd::2,end=2001:abcd::ffff:ffff:ffff:fffe',
             :dns_nameservers  => '2001:4860:4860::8888',
-            :host_routes      => 'destination=2001:abcd:0:1::/64,nexthop=2001:abcd::1',
+            :host_routes      => 'destination=2001:abcd:0:1::/64,gateway=2001:abcd::1',
           }
         end
 
@@ -145,7 +145,7 @@ name="net1"')
                    '--gateway=2001:abcd::1', '--dhcp',
                    '--allocation-pool=start=2001:abcd::2,end=2001:abcd::ffff:ffff:ffff:fffe',
                    '--dns-nameserver=2001:4860:4860::8888',
-                   '--host-route=destination=2001:abcd:0:1::/64,nexthop=2001:abcd::1',
+                   '--host-route=destination=2001:abcd:0:1::/64,gateway=2001:abcd::1',
                    '--network=net1',
                    '--subnet-range=2001:abcd::/64'])
             .returns('allocation_pools="[{\'start\': \'2001:abcd::2\', \'end\': \'2001:abcd::ffff:ffff:ffff:fffe\'}]"
@@ -169,7 +169,7 @@ name="net1"')
           provider.create
           expect(provider.exists?).to be_truthy
           expect(provider.allocation_pools).to eq(['start=2001:abcd::2,end=2001:abcd::ffff:ffff:ffff:fffe'])
-          expect(provider.host_routes).to eq(['destination=2001:abcd:0:1::/64,nexthop=2001:abcd::1'])
+          expect(provider.host_routes).to eq(['destination=2001:abcd:0:1::/64,gateway=2001:abcd::1'])
           expect(provider.network_name).to eq('net1')
         end
       end
@@ -308,5 +308,20 @@ project_id="60f9544eb94c42a6b7e8e98c2be981b1"')
         expect(instances[1].tenant_id).to eq('60f9544eb94c42a6b7e8e98c2be981b1')
       end
     end
+  end
+
+  describe 'can parse one and more host_routes' do
+    one_host_routes = "[{u\'destination\': u\'12.0.0.0/24\', u\'nexthop\': u\'10.0.0.1\'}]"
+    two_host_routes = "[{u\'destination\': u\'12.0.0.0/24\', u\'nexthop\': u\'10.0.0.1\'}, {u\'destination\': u\'12.0.0.99/24\', u\'nexthop\': u\'10.0.0.99\'}]"
+
+    result_one_route = ["destination=12.0.0.0/24,gateway=10.0.0.1"]
+    result_two_routes = ["destination=12.0.0.0/24,gateway=10.0.0.1", "destination=12.0.0.99/24,gateway=10.0.0.99"]
+
+    [ [one_host_routes, result_one_route], [two_host_routes, result_two_routes]].each { |i, o|
+      it "should call parse_host_routes with #{o.length} routes" do
+        results = provider_class.parse_host_routes(i)
+        expect(results).to eql(o)
+      end
+    }
   end
 end

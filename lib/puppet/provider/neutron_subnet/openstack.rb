@@ -104,7 +104,7 @@ Puppet::Type.type(:neutron_subnet).provide(
     parse_python_list(values).each do |route|
       nexthop = route['nexthop']
       destination = route['destination']
-      host_routes << "destination=#{destination},nexthop=#{nexthop}"
+      host_routes << "destination=#{destination},gateway=#{nexthop}"
     end
     return host_routes
   end

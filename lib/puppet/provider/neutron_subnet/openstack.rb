@@ -56,7 +56,20 @@ Puppet::Type.type(:neutron_subnet).provide(
   end
 
   def self.prefetch(resources)
-    subnets = instances
+    # NOTE{mohido}: fixes race condition between loading and reading networks (dynamic networks)
+    retries = 0
+    begin
+      networks = instances
+    rescue Exception => e
+      Puppet::Util::Warnings.warnonce "Fetching subnets failed, trying again..."
+      retries += 1
+      if (retries <= 5)
+        sleep(5)
+        retry
+      end
+      raise "Could not load subnets: #{e.message}"
+    end
+
     resources.keys.each do |name|
       if provider = subnets.find{ |subnet| subnet.name == name }
         resources[name].provider = provider

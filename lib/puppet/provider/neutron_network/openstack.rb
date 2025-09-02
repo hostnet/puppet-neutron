@@ -52,7 +52,20 @@ Puppet::Type.type(:neutron_network).provide(
   end
 
   def self.prefetch(resources)
-    networks = instances
+    # NOTE{mohido}: fixes race condition between loading and reading networks (dynamic networks)
+    retries = 0
+    begin
+      networks = instances
+    rescue Exception => e
+      Puppet::Util::Warnings.warnonce "Fetching networks failed, trying again..."
+      retries += 1
+      if (retries <= 5)
+        sleep(5)
+        retry
+      end
+      raise "Could not load networks: #{e.message}"
+    end
+
     resources.keys.each do |name|
       if provider = networks.find{ |net| net.name == name }
         resources[name].provider = provider

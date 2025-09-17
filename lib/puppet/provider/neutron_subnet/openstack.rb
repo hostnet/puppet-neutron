@@ -56,12 +56,33 @@ Puppet::Type.type(:neutron_subnet).provide(
   end
 
   def self.prefetch(resources)
-    subnets = instances
-    resources.keys.each do |name|
-      if provider = subnets.find{ |subnet| subnet.name == name }
-        resources[name].provider = provider
+    # NOTE{mohido}: fixes race condition between loading and reading networks (dynamic networks)
+    self.do_not_manage = true
+    request('subnet', 'list').collect do |attrs|
+      if found = resources.find{ |name, resource| name == attrs[:name] }
+        _, resource = found
+        subnet = request('subnet', 'show', attrs[:id])
+        resource.provider = new(
+        :ensure            => :present,
+        :name              => attrs[:name],
+        :id                => attrs[:id],
+        :cidr              => subnet[:cidr],
+        :ip_version        => subnet[:ip_version],
+        :ipv6_ra_mode      => subnet[:ipv6_ra_mode],
+        :ipv6_address_mode => subnet[:ipv6_address_mode],
+        :gateway_ip        => parse_gateway_ip(subnet[:gateway_ip]),
+        :allocation_pools  => parse_allocation_pool(subnet[:allocation_pools]),
+        :host_routes       => parse_host_routes(subnet[:host_routes]),
+        :dns_nameservers   => parse_dns_nameservers(subnet[:dns_nameservers]),
+        :enable_dhcp       => subnet[:enable_dhcp],
+        :network_id        => subnet[:network_id],
+        :network_name      => get_network_name(subnet[:network_id]),
+        :tenant_id         => subnet[:project_id],
+        :project_id        => subnet[:project_id],
+      )
       end
     end
+    self.do_not_manage = false
   end
 
   def self.parse_gateway_ip(value)

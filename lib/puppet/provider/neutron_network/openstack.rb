@@ -53,12 +53,30 @@ Puppet::Type.type(:neutron_network).provide(
   end
 
   def self.prefetch(resources)
-    networks = instances
-    resources.keys.each do |name|
-      if provider = networks.find{ |net| net.name == name }
-        resources[name].provider = provider
+    # NOTE{mohido}: fixes race condition between loading and reading networks (dynamic networks)
+    self.do_not_manage = true
+    request('network', 'list').collect do |attrs|
+      if found = resources.find{ |name, resource| name == attrs[:name] }
+        _, resource = found
+        network = request('network', 'show', attrs[:id])
+        resource.provider = new(
+          :ensure                    => :present,
+          :name                      => attrs[:name],
+          :id                        => attrs[:id],
+          :admin_state_up            => network[:admin_state_up],
+          :provider_network_type     => network[:provider_network_type],
+          :provider_physical_network => network[:provider_physical_network],
+          :provider_segmentation_id  => network[:provider_segmentation_id],
+          :router_external           => network[:router_external],
+          :shared                    => network[:shared],
+          :tenant_id                 => network[:project_id],
+          :project_id                => network[:project_id],
+          :availability_zone_hint    => parse_availability_zone_hint(network[:availability_zone_hints]),
+          :mtu                       => network[:mtu],
+        )
       end
     end
+    self.do_not_manage = false
   end
 
   def exists?

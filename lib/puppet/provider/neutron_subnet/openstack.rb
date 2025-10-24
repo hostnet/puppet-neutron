@@ -33,22 +33,23 @@ Puppet::Type.type(:neutron_subnet).provide(
     list = request('subnet', 'list').collect do |attrs|
       subnet = request('subnet', 'show', attrs[:id])
       new(
-        :ensure            => :present,
-        :name              => attrs[:name],
-        :id                => attrs[:id],
-        :cidr              => subnet[:cidr],
-        :ip_version        => subnet[:ip_version],
-        :ipv6_ra_mode      => subnet[:ipv6_ra_mode],
-        :ipv6_address_mode => subnet[:ipv6_address_mode],
-        :gateway_ip        => parse_gateway_ip(subnet[:gateway_ip]),
-        :allocation_pools  => parse_allocation_pool(subnet[:allocation_pools]),
-        :host_routes       => parse_host_routes(subnet[:host_routes]),
-        :dns_nameservers   => parse_dns_nameservers(subnet[:dns_nameservers]),
-        :enable_dhcp       => subnet[:enable_dhcp],
-        :network_id        => subnet[:network_id],
-        :network_name      => get_network_name(subnet[:network_id]),
-        :tenant_id         => subnet[:project_id],
-        :project_id        => subnet[:project_id],
+        :ensure               => :present,
+        :name                 => attrs[:name],
+        :id                   => attrs[:id],
+        :cidr                 => subnet[:cidr],
+        :ip_version           => subnet[:ip_version],
+        :ipv6_ra_mode         => subnet[:ipv6_ra_mode],
+        :ipv6_address_mode    => subnet[:ipv6_address_mode],
+        :gateway_ip           => parse_gateway_ip(subnet[:gateway_ip]),
+        :allocation_pools     => parse_allocation_pool(subnet[:allocation_pools]),
+        :host_routes          => parse_host_routes(subnet[:host_routes]),
+        :dns_nameservers      => parse_dns_nameservers(subnet[:dns_nameservers]),
+        :enable_dhcp          => subnet[:enable_dhcp],
+        :dns_publish_fixed_ip => subnet[:dns_publish_fixed_ip],
+        :network_id           => subnet[:network_id],
+        :network_name         => get_network_name(subnet[:network_id]),
+        :tenant_id            => subnet[:project_id],
+        :project_id           => subnet[:project_id],
       )
     end
     self.do_not_manage = false
@@ -63,22 +64,23 @@ Puppet::Type.type(:neutron_subnet).provide(
         _, resource = found
         subnet = request('subnet', 'show', attrs[:id])
         resource.provider = new(
-        :ensure            => :present,
-        :name              => attrs[:name],
-        :id                => attrs[:id],
-        :cidr              => subnet[:cidr],
-        :ip_version        => subnet[:ip_version],
-        :ipv6_ra_mode      => subnet[:ipv6_ra_mode],
-        :ipv6_address_mode => subnet[:ipv6_address_mode],
-        :gateway_ip        => parse_gateway_ip(subnet[:gateway_ip]),
-        :allocation_pools  => parse_allocation_pool(subnet[:allocation_pools]),
-        :host_routes       => parse_host_routes(subnet[:host_routes]),
-        :dns_nameservers   => parse_dns_nameservers(subnet[:dns_nameservers]),
-        :enable_dhcp       => subnet[:enable_dhcp],
-        :network_id        => subnet[:network_id],
-        :network_name      => get_network_name(subnet[:network_id]),
-        :tenant_id         => subnet[:project_id],
-        :project_id        => subnet[:project_id],
+        :ensure               => :present,
+        :name                 => attrs[:name],
+        :id                   => attrs[:id],
+        :cidr                 => subnet[:cidr],
+        :ip_version           => subnet[:ip_version],
+        :ipv6_ra_mode         => subnet[:ipv6_ra_mode],
+        :ipv6_address_mode    => subnet[:ipv6_address_mode],
+        :gateway_ip           => parse_gateway_ip(subnet[:gateway_ip]),
+        :allocation_pools     => parse_allocation_pool(subnet[:allocation_pools]),
+        :host_routes          => parse_host_routes(subnet[:host_routes]),
+        :dns_nameservers      => parse_dns_nameservers(subnet[:dns_nameservers]),
+        :enable_dhcp          => subnet[:enable_dhcp],
+        :dns_publish_fixed_ip => subnet[:dns_publish_fixed_ip],
+        :network_id           => subnet[:network_id],
+        :network_name         => get_network_name(subnet[:network_id]),
+        :tenant_id            => subnet[:project_id],
+        :project_id           => subnet[:project_id],
       )
       end
     end
@@ -162,6 +164,12 @@ Puppet::Type.type(:neutron_subnet).provide(
       opts << "--dhcp"
     end
 
+    if @resource[:dns_publish_fixed_ip] == 'False'
+      opts << "--no-dns-publish-fixed-ip"
+    else
+      opts << "--dns-publish-fixed-ip"
+    end
+
     if @resource[:allocation_pools]
       Array(@resource[:allocation_pools]).each do |allocation_pool|
         opts << "--allocation-pool=#{allocation_pool}"
@@ -200,22 +208,23 @@ Puppet::Type.type(:neutron_subnet).provide(
 
     subnet = self.class.request('subnet', 'create', opts)
     @property_hash = {
-      :ensure            => :present,
-      :name              => subnet[:name],
-      :id                => subnet[:id],
-      :cidr              => subnet[:cidr],
-      :ip_version        => subnet[:ip_version],
-      :ipv6_ra_mode      => subnet[:ipv6_ra_mode],
-      :ipv6_address_mode => subnet[:ipv6_address_mode],
-      :gateway_ip        => self.class.parse_gateway_ip(subnet[:gateway_ip]),
-      :allocation_pools  => self.class.parse_allocation_pool(subnet[:allocation_pools]),
-      :host_routes       => self.class.parse_host_routes(subnet[:host_routes]),
-      :dns_nameservers   => self.class.parse_dns_nameservers(subnet[:dns_nameservers]),
-      :enable_dhcp       => subnet[:enable_dhcp],
-      :network_id        => subnet[:network_id],
-      :network_name      => self.class.get_network_name(subnet[:network_id]),
-      :tenant_id         => subnet[:project_id],
-      :project_id        => subnet[:project_id],
+      :ensure               => :present,
+      :name                 => subnet[:name],
+      :id                   => subnet[:id],
+      :cidr                 => subnet[:cidr],
+      :ip_version           => subnet[:ip_version],
+      :ipv6_ra_mode         => subnet[:ipv6_ra_mode],
+      :ipv6_address_mode    => subnet[:ipv6_address_mode],
+      :gateway_ip           => self.class.parse_gateway_ip(subnet[:gateway_ip]),
+      :allocation_pools     => self.class.parse_allocation_pool(subnet[:allocation_pools]),
+      :host_routes          => self.class.parse_host_routes(subnet[:host_routes]),
+      :dns_nameservers      => self.class.parse_dns_nameservers(subnet[:dns_nameservers]),
+      :enable_dhcp          => subnet[:enable_dhcp],
+      :dns_publish_fixed_ip => subnet[:dns_publish_fixed_ip],
+      :network_id           => subnet[:network_id],
+      :network_name         => self.class.get_network_name(subnet[:network_id]),
+      :tenant_id            => subnet[:project_id],
+      :project_id           => subnet[:project_id],
     }
   end
 
@@ -237,6 +246,14 @@ Puppet::Type.type(:neutron_subnet).provide(
           opts << '--no-dhcp'
         else
           opts << '--dhcp'
+        end
+      end
+
+      if @property_flush.has_key?(:dns_publish_fixed_ip)
+        if @property_flush[:dns_publish_fixed_ip] == 'False'
+          opts << '--no-dns-publish-fixed-ip'
+        else
+          opts << '--dns-publish-fixed-ip'
         end
       end
 
@@ -283,6 +300,7 @@ Puppet::Type.type(:neutron_subnet).provide(
   [
     :gateway_ip,
     :enable_dhcp,
+    :dns_publish_fixed_ip,
     :allocation_pools,
     :dns_nameservers,
     :host_routes,

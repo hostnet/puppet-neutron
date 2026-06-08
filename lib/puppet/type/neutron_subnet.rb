@@ -66,6 +66,14 @@ Puppet::Type.newtype(:neutron_subnet) do
     EOT
   end
 
+  newproperty(:dns_publish_fixed_ip) do
+    desc 'Whether to publish DNS records in Designate'
+    newvalues(/(t|T)rue/, /(f|F)alse/)
+    munge do |v|
+      v.to_s.capitalize
+    end
+  end
+
   newproperty(:dns_nameservers, :array_matching => :all) do
     desc <<-EOT
     'Array of DNS name servers used by hosts in this subnet.'
